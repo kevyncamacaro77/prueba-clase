@@ -1,174 +1,169 @@
 <script setup>
-import { ref, computed } from 'vue'
-// ============ ESTADO ============
-const clientesDisponibles = [
-    'Distribuidora del Norte S.A.',
-    'Papelería Central',
-    'Servicios Técnicos López'
-]
-const clienteSeleccionado = ref('')
-const fecha = ref(new Date().toISOString().substr(0, 10))
-const estado = ref('pagada')
-const detalle = ref([
-    { concepto: '', cantidad: 1, precioUnitario: 0 }
-])
-const facturas = ref([])
-const snackbar = ref(false)
-const mensajeSnack = ref('')
-// ============ COMPUTED (Reactividad en tiempo real) ============
-// Se recalculan automáticamente al cambiar cantidad, precio o agregar líneas
-const subtotal = computed(() =>
-    detalle.value.reduce((acc, d) => acc + (d.cantidad * d.precioUnitario), 0)
-)
-const iva = computed(() => subtotal.value * 0.16)
-const total = computed(() => subtotal.value + iva.value)
+import { ref, onMounted } from 'vue'
+import { movimientoService } from '../services/api'
+import TarjetaKPI from '../components/TarjetaKPI.vue'
+
+// ============ ESTADO REACTIVO ============
+const movimientos = ref([])
+const resumen = ref({ totalIngresos: 0, totalEgresos: 0, saldo: 0, totalMovimientos: 0 })
+const cargando = ref(false)
+const error = ref(null)
+const dialog = ref(false)
+
+const formulario = ref({
+  concepto: '',
+  tipo: 'Ingreso',
+  monto: 0
+})
+
+// ============ VALIDACIONES ============
+const reglas = {
+  requerido: (v) => !!v || 'Campo obligatorio',
+  montoPositivo: (v) => (v && v > 0) || 'El monto debe ser un número positivo'
+}
+
+// ============ CARGAR DATOS DEL BACKEND ============
+const cargarFacturacion = async () => {
+  cargando.value = true
+  error.value = null
+  try {
+    const [resMovs, resResumen] = await Promise.all([
+      movimientoService.getAll(),
+      movimientoService.getResumen()
+    ])
+    movimientos.value = resMovs.data.datos
+    resumen.value = resResumen.data.datos
+  } catch (err) {
+    error.value = 'Error al cargar el módulo de facturación: ' + err.message
+  } finally {
+    cargando.value = false
+  }
+}
+
+onMounted(cargarFacturacion)
+
 // ============ MÉTODOS ============
-const agregarLinea = () => {
-    detalle.value.push({ concepto: '', cantidad: 1, precioUnitario: 0 })
+const abrirNuevo = () => {
+  formulario.value = { concepto: '', tipo: 'Ingreso', monto: 0 }
+  dialog.value = true
 }
-const eliminarLinea = (idx) => {
-    if (detalle.value.length > 1) detalle.value.splice(idx, 1)
-}
-const emitirFactura = () => {
-    if (!clienteSeleccionado.value) {
-        mensajeSnack.value = '⚠  Selecciona un cliente'
-        snackbar.value = true
-        return
-    }
-    if (subtotal.value <= 0) {
-        mensajeSnack.value = '⚠  La factura debe tener al menos un concepto'
-        snackbar.value = true
-        return
-    }
-    facturas.value.push({
-        id: facturas.value.length + 1,
-        cliente: clienteSeleccionado.value,
-        fecha: fecha.value,
-        subtotal: subtotal.value,
-        iva: iva.value,
-        total: total.value,
-        estado: estado.value
-    })
-    // Reset
-    clienteSeleccionado.value = ''
-    detalle.value = [{ concepto: '', cantidad: 1, precioUnitario: 0 }]
-    mensajeSnack.value = '✅  Factura emitida correctamente'
-snackbar.value = true
+
+const guardarMovimiento = async () => {
+  try {
+    await movimientoService.create(formulario.value)
+    await cargarFacturacion() // Actualiza la lista y los KPI al instante
+    dialog.value = false
+  } catch (err) {
+    alert('Error al registrar factura/movimiento: ' + (err.response?.data?.mensaje || err.message))
+  }
 }
 </script>
+
 <template>
-    <div>
-        <h1 class="text-h4 mb-4">
-            🧾
-            Emisor de Facturas</h1>
-        <v-row>
-            <!-- FORMULARIO DE FACTURA -->
-            <v-col cols="12" md="7">
-                <v-card>
-                    <v-card-title>Datos de la Factura</v-card-title>
-                    <v-card-text>
-                        <v-row>
-                            <v-col cols="12" md="6">
-                                <v-select v-model="clienteSeleccionado" :items="clientesDisponibles" label="Cliente"
-                                    variant="outlined" prepend-inner-icon="mdi-account" />
-                            </v-col>
-                            <v-col cols="12" md="3">
-                                <v-text-field v-model="fecha" label="Fecha" type="date" variant="outlined" />
-                            </v-col>
-                            <v-col cols="12" md="3">
-                                <v-select v-model="estado" :items="[
-                                    { title: 'Contado', value: 'pagada' },
-                                    { title: 'Crédito', value: 'credito' }
-                                ]" label="Estado de pago" variant="outlined" />
-                            </v-col>
-                        </v-row>
-                        <v-divider class="my-4" />
-                        <!-- DETALLE DE LA FACTURA -->
-                        <div class="text-subtitle-1 mb-2">Conceptos</div>
-                        <v-card v-for="(linea, idx) in detalle" :key="idx" variant="outlined" class="mb-2 pa-2">
-                            <v-row align="center">
-                                <v-col cols="12" md="5">
-                                    <v-text-field v-model="linea.concepto" label="Concepto" variant="outlined"
-                                        density="compact" hide-details />
-                                </v-col>
-                                <v-col cols="4" md="2">
-                                    <v-text-field v-model.number="linea.cantidad" label="Cant." type="number"
-                                        variant="outlined" density="compact" hide-details />
-                                </v-col>
-                                <v-col cols="4" md="2">
-                                    <v-text-field v-model.number="linea.precioUnitario" label="P. Unit." type="number"
-                                        variant="outlined" density="compact" hide-details prefix="$" />
-                                </v-col>
-                                <v-col cols="3" md="2">
-                                    <strong class="text-primary">
-                                        ${{ (linea.cantidad * linea.precioUnitario).toFixed(2) }}
-                                    </strong>
-                                </v-col>
-                                <v-col cols="1">
-                                    <v-btn icon="mdi-delete" size="small" color="error" variant="text"
-                                        @click="eliminarLinea(idx)" :disabled="detalle.length === 1" />
-                                </v-col>
-                            </v-row>
-                        </v-card>
-                        <v-btn variant="outlined" color="primary" @click="agregarLinea" class="mt-2">
-                            <v-icon start>mdi-plus</v-icon>
-                            Agregar concepto
-                        </v-btn>
-                    </v-card-text>
-                </v-card>
-            </v-col>
-            <!-- RESUMEN DE LA FACTURA -->
-            <v-col cols="12" md="5">
-                <v-card color="primary" variant="tonal">
-                    <v-card-title>
-                        <v-icon start>mdi-calculator</v-icon>
-                        Resumen
-                    </v-card-title>
-                    <v-card-text>
-                        <div class="d-flex justify-space-between mb-2">
-                            <span>Subtotal:</span>
-                            <strong>${{ subtotal.toFixed(2) }}</strong>
-                        </div>
-                        <div class="d-flex justify-space-between mb-2">
-                            <span>IVA (16%):</span>
-                            <strong>${{ iva.toFixed(2) }}</strong>
-                        </div>
-                        <v-divider class="my-2" />
-                        <div class="d-flex justify-space-between">
-                            <span class="text-h6">TOTAL:</span>
-                            <span class="text-h6">${{ total.toFixed(2) }}</span>
-                        </div>
-                    </v-card-text>
-                    <v-card-actions>
-                        <v-spacer />
-                        <v-btn color="primary" size="large" @click="emitirFactura">
-                            <v-icon start>mdi-check</v-icon>
-                            Emitir Factura
-                        </v-btn>
-                    </v-card-actions>
-                </v-card>
-                <!-- HISTORIAL -->
-                <v-card class="mt-4" v-if="facturas.length > 0">
-                    <v-card-title>Últimas facturas</v-card-title>
-                    <v-list>
-                        <v-list-item v-for="f in facturas" :key="f.id">
-                            <template v-slot:prepend>
-                                <v-icon color="primary">mdi-receipt</v-icon>
-                            </template>
-                            <v-list-item-title>{{ f.cliente }}</v-list-item-title>
-                            <v-list-item-subtitle>{{ f.fecha }}</v-list-item-subtitle>
-                            <template v-slot:append>
-                                <v-chip :color="f.estado === 'pagada' ? 'success' : 'warning'" size="small">
-                                    ${{ f.total.toFixed(2) }}
-                                </v-chip>
-                            </template>
-                        </v-list-item>
-                    </v-list>
-                </v-card>
-            </v-col>
-        </v-row>
-        <v-snackbar v-model="snackbar" :timeout="3000">
-            {{ mensajeSnack }}
-        </v-snackbar>
-    </div>
+  <div>
+    <!-- ALERTA DE ERROR -->
+    <v-alert v-if="error" type="error" class="mb-4" closable>
+      {{ error }}
+    </v-alert>
+
+    <!-- RESUMEN FINANCIERO EN TIEMPO REAL -->
+    <v-row class="mb-4">
+      <v-col cols="12" md="4">
+        <TarjetaKPI 
+          titulo="Total Facturado (Ingresos)" 
+          :valor="'$' + resumen.totalIngresos.toLocaleString()" 
+          icono="mdi-cash-register" 
+          color="success" 
+        />
+      </v-col>
+      <v-col cols="12" md="4">
+        <TarjetaKPI 
+          titulo="Total Gastos (Egresos)" 
+          :valor="'$' + resumen.totalEgresos.toLocaleString()" 
+          icono="mdi-receipt-text-minus" 
+          color="error" 
+        />
+      </v-col>
+      <v-col cols="12" md="4">
+        <TarjetaKPI 
+          titulo="Balance / Saldo" 
+          :valor="'$' + resumen.saldo.toLocaleString()" 
+          icono="mdi-scale-balance" 
+          :color="resumen.saldo >= 0 ? 'primary' : 'warning'" 
+        />
+      </v-col>
+    </v-row>
+
+    <!-- TABLA DE FACTURAS Y MOVIMIENTOS -->
+    <v-card :loading="cargando">
+      <v-card-title class="d-flex align-center">
+        <span>Módulo de Facturación y Movimientos</span>
+        <v-spacer />
+        <v-btn color="primary" @click="abrirNuevo">
+          <v-icon start>mdi-plus</v-icon>
+          Nueva Factura / Registro
+        </v-btn>
+      </v-card-title>
+
+      <v-data-table :headers="[
+        { title: 'ID', key: 'id' },
+        { title: 'Concepto / Detalle', key: 'concepto' },
+        { title: 'Tipo', key: 'tipo' },
+        { title: 'Monto', key: 'monto', align: 'end' }
+      ]" :items="movimientos" :items-per-page="5">
+        
+        <!-- Slot tipo badge -->
+        <template v-slot:item.tipo="{ item }">
+          <v-chip :color="item.tipo === 'Ingreso' ? 'success' : 'error'" size="small">
+            {{ item.tipo }}
+          </v-chip>
+        </template>
+
+        <!-- Slot monto formato -->
+        <template v-slot:item.monto="{ item }">
+          <span :class="item.tipo === 'Ingreso' ? 'text-success' : 'text-error'">
+            {{ item.tipo === 'Ingreso' ? '+' : '-' }}${{ (item.monto || 0).toLocaleString() }}
+          </span>
+        </template>
+      </v-data-table>
+    </v-card>
+
+    <!-- DIÁLOGO NUEVA FACTURA / MOVIMIENTO -->
+    <v-dialog v-model="dialog" max-width="500" persistent>
+      <v-card>
+        <v-card-title>Registrar Factura o Movimiento</v-card-title>
+        <v-card-text>
+          <v-form @submit.prevent="guardarMovimiento">
+            <v-text-field 
+              v-model="formulario.concepto" 
+              label="Concepto (Ej: Factura #001 - Venta de productos)" 
+              :rules="[reglas.requerido]" 
+              variant="outlined" 
+              class="mb-2" 
+            />
+            <v-select 
+              v-model="formulario.tipo" 
+              :items="['Ingreso', 'Egreso']" 
+              label="Tipo" 
+              variant="outlined" 
+              class="mb-2" 
+            />
+            <v-text-field 
+              v-model.number="formulario.monto" 
+              label="Monto Total" 
+              type="number" 
+              prefix="$" 
+              :rules="[reglas.requerido, reglas.montoPositivo]" 
+              variant="outlined" 
+            />
+          </v-form>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn @click="dialog = false">Cancelar</v-btn>
+          <v-btn color="primary" @click="guardarMovimiento">Guardar</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+  </div>
 </template>
