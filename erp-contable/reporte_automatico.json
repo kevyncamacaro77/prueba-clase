@@ -1,0 +1,24 @@
+{
+  "estudiante": "usuario",
+  "fecha": "22/9/2026, 10:33:23 a. m.",
+  "semana": 8,
+  "proyecto": "erp-contable",
+  "pruebas": {
+    "axios_instalado": true,
+    "servicio_api_existe": true,
+    "usa_axios_create": true,
+    "usa_base_url": true,
+    "usa_async_await": true,
+    "usa_try_catch": true,
+    "usa_finally": true,
+    "usa_computed": true,
+    "usa_onMounted": true,
+    "usa_ref": true,
+    "maneja_estado_cargando": true,
+    "maneja_estado_error": true
+  },
+  "puntaje": 12,
+  "maxPuntaje": 12,
+  "estado_final": "APROBADO_AUTOMÁTICO",
+  "recomendaciones": []
+}
