@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { contactoService } from '../services/api'
+import { contactoService } from '../services/erpApi'
 import TarjetaKPI from '../components/TarjetaKPI.vue'
 
 // ============ ESTADO REACTIVO ============

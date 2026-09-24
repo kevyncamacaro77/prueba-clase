@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import { movimientoService } from '../services/api'
+import { movimientoService } from '../services/erpApi'
 import TarjetaKPI from '../components/TarjetaKPI.vue'
 
 // ============ ESTADO REACTIVO ============
