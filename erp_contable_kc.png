@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg
+PUBLIC "-//W3C//DTD SVG 1.1//EN"
+       "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg viewBox="135 49 544 244" width="409px" height="195px" xmlns="http://www.w3.org/2000/svg" version="1.1">
+   <line x1="264" y1="199" x2="274" y2="199" style="stroke:#0b0;stroke-width:1;"/>
+   <line x1="405" y1="94" x2="415" y2="94" style="stroke:#0b0;stroke-width:1;"/>
+   <line x1="274" y1="199" x2="405" y2="94" style="stroke:#0b0;stroke-width:1;"/>
+   <line x1="271.5" y1="199" x2="267.96446609407" y2="202.53553390593" style="stroke:#0b0;stroke-width:2;"/>
+   <line x1="271.5" y1="199" x2="267.96446609407" y2="195.46446609407" style="stroke:#0b0;stroke-width:2;"/>
+   <line x1="410" y1="94" x2="406.46446609407" y2="97.535533905933" style="stroke:#0b0;stroke-width:2;"/>
+   <line x1="410" y1="94" x2="406.46446609407" y2="90.464466094067" style="stroke:#0b0;stroke-width:2;"/>
+   <rect width="114" height="20" x="415" y="64" style="fill:#007;stroke:black;"/>
+   <text width="114" height="20" x="420" y="78" style="fill:#fff;" font-family="Arial" font-size="16px"> contactos</text>
+   <rect width="114" height="20" x="415" y="84" style="fill:#aea;stroke:black;"/>
+   <text width="114" height="20" x="420" y="98" style="fill:black;" font-family="Arial" font-size="16px">id</text>
+   <rect width="114" height="20" x="415" y="104" style="fill:none;stroke:black;"/>
+   <text width="114" height="20" x="420" y="118" style="fill:black;" font-family="Arial" font-size="16px">nombre</text>
+   <rect width="114" height="20" x="415" y="124" style="fill:none;stroke:black;"/>
+   <text width="114" height="20" x="420" y="138" style="fill:black;" font-family="Arial" font-size="16px">rfc</text>
+   <rect width="114" height="20" x="415" y="144" style="fill:none;stroke:black;"/>
+   <text width="114" height="20" x="420" y="158" style="fill:black;" font-family="Arial" font-size="16px">tipo</text>
+   <rect width="114" height="20" x="415" y="164" style="fill:none;stroke:black;"/>
+   <text width="114" height="20" x="420" y="178" style="fill:black;" font-family="Arial" font-size="16px">email</text>
+   <rect width="114" height="20" x="415" y="184" style="fill:none;stroke:black;"/>
+   <text width="114" height="20" x="420" y="198" style="fill:black;" font-family="Arial" font-size="16px">telefono</text>
+   <rect width="114" height="20" x="415" y="204" style="fill:none;stroke:black;"/>
+   <text width="114" height="20" x="420" y="218" style="fill:black;" font-family="Arial" font-size="16px">fecha_creacion</text>
+   <rect width="114" height="20" x="150" y="69" style="fill:#007;stroke:black;"/>
+   <text width="114" height="20" x="155" y="83" style="fill:#fff;" font-family="Arial" font-size="16px"> movimientos</text>
+   <rect width="114" height="20" x="150" y="89" style="fill:#aea;stroke:black;"/>
+   <text width="114" height="20" x="155" y="103" style="fill:black;" font-family="Arial" font-size="16px">id</text>
+   <rect width="114" height="20" x="150" y="109" style="fill:none;stroke:black;"/>
+   <text width="114" height="20" x="155" y="123" style="fill:black;" font-family="Arial" font-size="16px">concepto</text>
+   <rect width="114" height="20" x="150" y="129" style="fill:none;stroke:black;"/>
+   <text width="114" height="20" x="155" y="143" style="fill:black;" font-family="Arial" font-size="16px">tipo</text>
+   <rect width="114" height="20" x="150" y="149" style="fill:none;stroke:black;"/>
+   <text width="114" height="20" x="155" y="163" style="fill:black;" font-family="Arial" font-size="16px">monto</text>
+   <rect width="114" height="20" x="150" y="169" style="fill:none;stroke:black;"/>
+   <text width="114" height="20" x="155" y="183" style="fill:black;" font-family="Arial" font-size="16px">fecha</text>
+   <rect width="114" height="20" x="150" y="189" style="fill:none;stroke:black;"/>
+   <text width="114" height="20" x="155" y="203" style="fill:black;" font-family="Arial" font-size="16px">contacto_id</text>
+   <rect width="114" height="20" x="150" y="209" style="fill:none;stroke:black;"/>
+   <text width="114" height="20" x="155" y="223" style="fill:black;" font-family="Arial" font-size="16px">fecha_creacion</text>
+</svg>
