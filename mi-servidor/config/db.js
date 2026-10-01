@@ -4,7 +4,7 @@ const pool = mysql.createPool({
   host: 'localhost',
   user: 'erp_user',
   password: 'erp2026',
-  database: 'erp_contable_kc', // Tu base de datos con iniciales
+  database: 'erp_contable_kc', 
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0

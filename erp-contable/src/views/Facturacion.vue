@@ -50,8 +50,13 @@ const abrirNuevo = () => {
 
 const guardarMovimiento = async () => {
   try {
-    await movimientoService.create(formulario.value)
-    await cargarFacturacion() // Actualiza la lista y los KPI al instante
+    const payload = {
+      ...formulario.value,
+      fecha: new Date().toISOString().split('T')[0], // Genera "YYYY-MM-DD"
+      contacto_id: 1 // ID por defecto o del contacto activo
+    }
+    await movimientoService.create(payload)
+    await cargarFacturacion()
     dialog.value = false
   } catch (err) {
     alert('Error al registrar factura/movimiento: ' + (err.response?.data?.mensaje || err.message))

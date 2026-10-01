@@ -134,6 +134,9 @@ app.post('/api/movimientos', async (req, res) => {
     if (isNaN(montoNumerico) || montoNumerico <= 0) {
       return res.status(400).json({ exito: false, mensaje: 'El monto debe ser un número positivo' });
     }
+    if (montoNumerico > 10000) {
+    return res.status(400).json({ exito: false, mensaje: 'El monto no puede superar $10,000' });
+    }
     const [result] = await db.query(
       'INSERT INTO movimientos (concepto, tipo, monto, fecha, contacto_id) VALUES (?, ?, ?, ?, ?)',
       [concepto, tipo, montoNumerico, fecha, contacto_id || null]
@@ -176,6 +179,29 @@ app.get('/api/resumen', async (req, res) => {
   } catch (error) {
     console.error('Error al obtener resumen:', error);
     res.status(500).json({ exito: false, mensaje: 'Error interno del servidor' });
+  }
+});
+
+// RETO TIPO 3: Filtrar movimientos por Tipo (Ingreso o Egreso)
+ app.get('/api/movimientos/tipo/:tipo', async (req, res) => {
+  try {
+    const { tipo } = req.params;
+    const [filas] = await db.query(
+      `SELECT m.*, c.nombre AS contacto_nombre 
+       FROM movimientos m 
+       LEFT JOIN contactos c ON m.contacto_id = c.id 
+       WHERE m.tipo = ?`,
+      [tipo]
+    );
+    res.status(200).json({
+      exito: true,
+      datos: filas
+    });
+  } catch (error) {
+    res.status(500).json({
+      exito: false,
+      mensaje: 'Error al filtrar movimientos: ' + error.message
+    });
   }
 });
 
