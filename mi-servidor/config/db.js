@@ -1,13 +1,13 @@
-const mysql = require('mysql2');
+const mysql = require('mysql2/promise'); // <-- IMPORTANTE: Agregar /promise para usar async/await
 
-const pool = mysql.createPool({
+const db = mysql.createPool({
   host: 'localhost',
-  user: 'erp_user',
-  password: 'erp2026',
-  database: 'erp_contable_kc', 
+  user: 'root',
+  password: '',
+  database: 'erp_contable_kc', // <-- Tu base de datos real
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0
 });
 
-module.exports = pool.promise();
+module.exports = db; // (Si este código está en un archivo db.js separado)

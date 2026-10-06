@@ -205,6 +205,108 @@ app.get('/api/resumen', async (req, res) => {
   }
 });
 
+// ============================================================
+// SEMANA 10: ENDPOINT POST /api/asientos (TRANSACCIONES ACID)
+// ============================================================
+app.post('/api/asientos', async (req, res) => {
+  const connection = await db.getConnection();
+  
+  try {
+    await connection.beginTransaction(); // 1. Iniciar Transacción ACID
+
+    const { fecha, descripcion, lineas } = req.body;
+
+    // VALIDACIÓN CASO 5: Array de líneas vacío o no definido
+    if (!lineas || !Array.isArray(lineas) || lineas.length === 0) {
+      throw new Error('El asiento debe contener al menos una línea en el detalle.');
+    }
+
+    let totalDebe = 0;
+    let totalHaber = 0;
+
+    // Validar montos y calcular totales
+    for (const l of lineas) {
+      const debe = parseFloat(l.debe || 0);
+      const haber = parseFloat(l.haber || 0);
+
+      // VALIDACIÓN CASO 4: Montos negativos
+      if (debe < 0 || haber < 0) {
+        throw new Error('Los montos del Debe y Haber no pueden ser valores negativos.');
+      }
+
+      totalDebe += debe;
+      totalHaber += haber;
+    }
+
+    // VALIDACIÓN CASO 2: Algoritmo de Cuadre (Suma Debe == Suma Haber)
+    if (Math.abs(totalDebe - totalHaber) > 0.01) {
+      throw new Error(`El asiento está descuadrado. Total Debe: $${totalDebe.toFixed(2)}, Total Haber:$${totalHaber.toFixed(2)}`);}
+    
+      
+// Insertar Cabecera
+const [resAsiento] = await connection.query(
+  `INSERT INTO asientos_contables (fecha, descripcion, total_debe, total_haber, estado) 
+   VALUES (?, ?, ?, ?, 'Cuadrado')`,
+  [fecha, descripcion, totalDebe, totalHaber]
+);
+
+const asientoId = resAsiento.insertId;
+
+// Insertar Detalles (Si la cuenta no existe, MySQL lanzará error FK -> Caso 3)
+for (const linea of lineas) {
+  await connection.query(
+    `INSERT INTO detalle_asientos (asiento_id, cuenta_id, debe, haber) 
+     VALUES (?, ?, ?, ?)`,
+    [asientoId, linea.cuenta_id, linea.debe || 0, linea.haber || 0]
+  );
+}
+
+await connection.commit(); // 2. Confirmar cambios permanente
+res.status(201).json({
+  exito: true,
+  mensaje: 'Asiento contable registrado exitosamente',
+  id: asientoId
+});
+} catch (error) {
+await connection.rollback(); // 3. Revertir todo si ocurre algún error
+res.status(400).json({
+exito: false,
+mensaje: error.message
+});
+} finally {
+connection.release(); // 4. Liberar conexión al pool
+}
+});
+
+// ============================================================
+// ENDPOINT PARA CHART.JS (REPORTES DE GASTOS)
+// ============================================================
+app.get('/api/reportes/grafico-gastos', async (req, res) => {
+  try {
+    const [filas] = await db.query(`
+      SELECT c.nombre AS categoria, IFNULL(SUM(d.debe), 0) AS total
+      FROM catalogo_cuentas c
+      LEFT JOIN detalle_asientos d ON c.id = d.cuenta_id
+      WHERE c.tipo = 'Gasto'
+      GROUP BY c.id, c.nombre
+    `);
+
+    const labels = filas.map(f => f.categoria);
+    const data = filas.map(f => parseFloat(f.total));
+
+    res.status(200).json({
+      labels: labels.length > 0 ? labels : ["Servicios", "Alquiler", "Insumos", "Nómina"],
+      datasets: [{
+        label: "Gastos por Categoría",
+        data: data.length > 0 ? data : [450, 1200, 300, 5000],
+        backgroundColor: ["#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0"]
+      }]
+    });
+  } catch (error) {
+    res.status(500).json({ exito: false, mensaje: error.message });
+  }
+});
+
 // INICIAR SERVIDOR
 app.listen(PORT, () => {
   console.log('====================================');
